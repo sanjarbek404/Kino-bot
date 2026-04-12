@@ -71,7 +71,7 @@ const globalVipScene = new Scenes.WizardScene(
             
             await ctx.reply(`📋 <b>Hamma narsa tayyor. Boshlaymizmi?</b>\n\n👥 Qamrov: ${count} ta foydalanuvchi\n💎 Beriladigan VIP: ${ctx.wizard.state.days} KUN\n📧 Xabar turi: ${ctx.wizard.state.message.type}`, {
                 parse_mode: 'HTML',
-                ...Markup.inlineKeyboard([
+                ...Markup.inlineKeyboard([  
                     [Markup.button.callback('🚀 Barchaga Tarqatish', 'start_global_vip')],
                     [Markup.button.callback('❌ Bekor qilish', 'cancel_vip')]
                 ])

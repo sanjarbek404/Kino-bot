@@ -191,7 +191,7 @@ export const authMiddleware = async (ctx, next) => {
 export const adminMiddleware = (ctx, next) => {
     try {
         if (!isAdmin(ctx.from.id)) {
-            return ctx.reply("❌ Bu buyruq faqat admin uchun.");
+            return ctx.reply(`❌ Bu buyruq faqat admin uchun.\n\nSizning ID raqamingiz: <code>${ctx.from.id}</code>`, { parse_mode: 'HTML' });
         }
 
         return next();
