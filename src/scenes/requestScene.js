@@ -34,7 +34,7 @@ const requestScene = new Scenes.WizardScene(
             const name = user.first_name || user.username || 'User';
 
             // Send to Admin
-            const adminId = process.env.ADMIN_ID;
+            const adminId = process.env.ADMIN_ID ? process.env.ADMIN_ID.split(',')[0].trim() : null;
             if (adminId) {
                 const adminMsg = ctx.t('request_admin_notify', { name, id: user.id, movie: movieName });
                 await ctx.telegram.sendMessage(adminId, adminMsg, { parse_mode: 'HTML' });

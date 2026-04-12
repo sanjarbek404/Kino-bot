@@ -1,4 +1,5 @@
 import { Markup } from 'telegraf';
+import { isAdmin } from '../utils/adminHelper.js';
 import logger from '../utils/logger.js';
 import { countMovies, deleteMovie, getMovieByCode, getAllMovies, getTopMovies } from '../services/movieService.js';
 import { toggleSubscription } from '../services/subscriptionService.js';
@@ -12,9 +13,8 @@ import { sendMainMenu } from '../utils/menuUtils.js';
 export const setupAdminCommands = (bot) => {
     const adminCheck = async (ctx) => {
         try {
-            const adminId = process.env.ADMIN_ID;
             // Super Admin (Env)
-            if (adminId && ctx.from?.id?.toString() === adminId.toString()) return true;
+            if (ctx.from?.id && isAdmin(ctx.from.id)) return true;
 
             // Database Admin
             const user = await User.findOne({ telegramId: ctx.from.id });
@@ -48,7 +48,7 @@ export const setupAdminCommands = (bot) => {
                 [Markup.button.callback('💾 Bazani Zaxiralash', 'admin_backup'), Markup.button.callback('📈 Katta Statistika', 'admin_stats_advanced')]
             ];
 
-            if (ctx.from.id.toString() === process.env.ADMIN_ID) {
+            if (isAdmin(ctx.from.id)) {
                 buttons.unshift([Markup.button.callback('🖥 Server', 'admin_server'), Markup.button.callback('🗂 Admin Logs', 'admin_logs')]);
             }
 
@@ -295,7 +295,7 @@ export const setupAdminCommands = (bot) => {
         try {
             await ctx.answerCbQuery();
 
-            const recentUsers = await User.find({ telegramId: { $ne: process.env.ADMIN_ID } })
+            const recentUsers = await User.find({ telegramId: { $nin: process.env.ADMIN_ID.split(",").map(id => id.trim()) } })
                 .sort({ _id: -1 })
                 .limit(10);
 
@@ -344,7 +344,7 @@ export const setupAdminCommands = (bot) => {
             const admins = await User.find({ role: { $in: ['admin', 'superadmin'] } });
             let msg = '👮‍♂️ <b>Bot Adminlari:</b>\n\n';
             admins.forEach(a => {
-                const isSuper = a.telegramId.toString() === process.env.ADMIN_ID;
+                const isSuper = isAdmin(a.telegramId);
                 msg += `👤 <b>${a.firstName}</b> ${isSuper ? '👑 (Bosh Admin)' : ''}\n🆔 <code>${a.telegramId}</code>\n\n`;
             });
             const buttons = [
@@ -357,7 +357,7 @@ export const setupAdminCommands = (bot) => {
     });
 
     bot.action('admin_logs', async (ctx) => {
-        if (ctx.from.id.toString() !== process.env.ADMIN_ID) return ctx.answerCbQuery('❌');
+        if (!isAdmin(ctx.from.id)) return ctx.answerCbQuery('❌');
         try {
             await ctx.answerCbQuery();
             const logs = await AdminLog.find().sort({ createdAt: -1 }).limit(15);
@@ -375,7 +375,7 @@ export const setupAdminCommands = (bot) => {
     });
 
     bot.action('admin_server', async (ctx) => {
-        if (ctx.from.id.toString() !== process.env.ADMIN_ID) return ctx.answerCbQuery('❌');
+        if (!isAdmin(ctx.from.id)) return ctx.answerCbQuery('❌');
         try {
             await ctx.answerCbQuery();
             const uptime = process.uptime();
@@ -567,7 +567,7 @@ export const setupAdminCommands = (bot) => {
 
             // INTERACTIVE MODE: No ID provided
             if (!telegramId) {
-                const recentUsers = await User.find({ isBanned: false, telegramId: { $ne: process.env.ADMIN_ID } })
+                const recentUsers = await User.find({ isBanned: false, telegramId: { $nin: process.env.ADMIN_ID.split(",").map(id => id.trim()) } })
                     .sort({ _id: -1 }) // Newest first
                     .limit(10);
 
@@ -586,7 +586,7 @@ export const setupAdminCommands = (bot) => {
             // DIRECT MODE: ID provided
 
             // 🛡 SECURITY: Protect Super Admin
-            if (telegramId.toString() === process.env.ADMIN_ID) {
+            if (isAdmin(telegramId)) {
                 // TREASON: Admin tried to ban Super Admin
                 await User.findOneAndUpdate({ telegramId: ctx.from.id }, { role: 'user' });
                 return ctx.reply('🚨 <b>XAVFSIZLIK TIZIMI:</b>\n\nSiz Bosh Adminni bloklamoqchi bo\'ldingiz. Bu taqiqlangan!\n\n❌ <b>Sizning Admin huquqingiz olib tashlandi.</b>', { parse_mode: 'HTML' });
@@ -621,7 +621,7 @@ export const setupAdminCommands = (bot) => {
             const targetId = parseInt(ctx.match[1]);
 
             // 🛡 SECURITY: Protect Super Admin
-            if (targetId.toString() === process.env.ADMIN_ID) {
+            if (isAdmin(targetId)) {
                 return ctx.answerCbQuery('❌ Super Adminni ban qilib bo\'lmaydi!', { show_alert: true });
             }
 
@@ -1055,7 +1055,7 @@ export const setupAdminCommands = (bot) => {
     bot.command('makeadmin', async (ctx) => {
         try {
             // Only Super Admin (Env ID)
-            if (ctx.from.id.toString() !== process.env.ADMIN_ID) {
+            if (!isAdmin(ctx.from.id)) {
                 return ctx.reply('❌ Bu buyruq faqat Bosh Admin uchun!');
             }
 
@@ -1090,7 +1090,7 @@ export const setupAdminCommands = (bot) => {
     bot.command('removeadmin', async (ctx) => {
         try {
             // Only Super Admin
-            if (ctx.from.id.toString() !== process.env.ADMIN_ID) {
+            if (!isAdmin(ctx.from.id)) {
                 // TRAP: If a normal admin tries to remove someone (especially Super Admin), warn them or logging.
                 // But specifically for 'removeadmin', we just say No.
                 return ctx.reply('❌ Bu buyruq faqat Bosh Admin uchun!');
@@ -1102,7 +1102,7 @@ export const setupAdminCommands = (bot) => {
             if (!telegramId) return ctx.reply('⚠️ ID kiriting: /removeadmin 123456');
 
             // ⚠️ SECURITY CHECK: Prevent removing Super Admin
-            if (telegramId.toString() === process.env.ADMIN_ID) {
+            if (isAdmin(telegramId)) {
                 return ctx.reply('❌ Siz Bosh Adminni o\'chira olmaysiz!');
             }
 
@@ -1135,7 +1135,7 @@ export const setupAdminCommands = (bot) => {
             const admins = await User.find({ role: { $in: ['admin', 'superadmin'] } });
             let msg = '👮‍♂️ <b>Bot Adminlari:</b>\n\n';
             admins.forEach(a => {
-                const isSuper = a.telegramId.toString() === process.env.ADMIN_ID;
+                const isSuper = isAdmin(a.telegramId);
                 msg += `👤 <b>${a.firstName}</b> ${isSuper ? '👑 (Bosh Admin)' : ''}\n🆔 <code>${a.telegramId}</code>\n\n`;
             });
 
@@ -1154,7 +1154,7 @@ export const setupAdminCommands = (bot) => {
     });
 
     bot.action('remove_admin_list', async (ctx) => {
-        if (ctx.from.id.toString() !== process.env.ADMIN_ID) {
+        if (!isAdmin(ctx.from.id)) {
             return ctx.answerCbQuery('❌ Faqat Bosh Admin o\'chira oladi!', { show_alert: true });
         }
 
@@ -1173,7 +1173,7 @@ export const setupAdminCommands = (bot) => {
     });
 
     bot.action(/rm_admin_(\d+)/, async (ctx) => {
-        if (ctx.from.id.toString() !== process.env.ADMIN_ID) return;
+        if (!isAdmin(ctx.from.id)) return;
         const targetId = parseInt(ctx.match[1]);
 
         const user = await User.findOne({ telegramId: targetId });
@@ -1195,7 +1195,7 @@ export const setupAdminCommands = (bot) => {
 
     // 🛡 Admin Logs (Button Handler)
     bot.hears('🗂 Admin Logs', async (ctx) => {
-        if (ctx.from.id.toString() !== process.env.ADMIN_ID) return;
+        if (!isAdmin(ctx.from.id)) return;
         // Reuse the /adminlogs logic
         try {
             const logs = await AdminLog.find().sort({ createdAt: -1 }).limit(15);
@@ -1216,7 +1216,7 @@ export const setupAdminCommands = (bot) => {
     // 🛡 Admin Logs Viewer (Super Admin)
     bot.command('adminlogs', async (ctx) => {
         try {
-            if (ctx.from.id.toString() !== process.env.ADMIN_ID) return;
+            if (!isAdmin(ctx.from.id)) return;
 
             const logs = await AdminLog.find().sort({ createdAt: -1 }).limit(15);
             if (logs.length === 0) return ctx.reply('📭 Loglar bo\'sh.');
@@ -1235,7 +1235,7 @@ export const setupAdminCommands = (bot) => {
 
     // 🖥 Server (Button Handler)
     bot.hears('🖥 Server', async (ctx) => {
-        if (ctx.from.id.toString() !== process.env.ADMIN_ID) return;
+        if (!isAdmin(ctx.from.id)) return;
         // Reuse /server logic
         try {
             const uptime = process.uptime();
@@ -1260,7 +1260,7 @@ export const setupAdminCommands = (bot) => {
     // 📊 Admin Stats (Super Admin) - Shows activity of all admins
     bot.command('adminstats', async (ctx) => {
         try {
-            if (ctx.from.id.toString() !== process.env.ADMIN_ID) return;
+            if (!isAdmin(ctx.from.id)) return;
 
             const stats = await AdminLog.aggregate([
                 {
@@ -1306,7 +1306,7 @@ export const setupAdminCommands = (bot) => {
     // 🖥 Server Stats (Modern)
     bot.command('server', async (ctx) => {
         try {
-            if (ctx.from.id.toString() !== process.env.ADMIN_ID) return;
+            if (!isAdmin(ctx.from.id)) return;
 
             const uptime = process.uptime();
             const uptimeHrs = Math.floor(uptime / 3600);
@@ -1330,7 +1330,7 @@ export const setupAdminCommands = (bot) => {
     // 📢 Broadcast to Admins (Private)
     bot.command('toadmins', async (ctx) => {
         try {
-            if (ctx.from.id.toString() !== process.env.ADMIN_ID) return;
+            if (!isAdmin(ctx.from.id)) return;
 
             const text = ctx.message.text.replace('/toadmins', '').trim();
             if (!text) return ctx.reply('⚠️ Xabar yozing: /toadmins Salom adminlar!');

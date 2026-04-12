@@ -27,8 +27,7 @@ const BAN_DURATION = 60 * 60 * 1000; // 1 hour
 let cachedChannels = null;
 let cachedChannelsAt = 0;
 let cachedSubEnabled = null;
-let cachedSubEnabledAt = 0;
-const SUB_CACHE_TTL_MS = 60 * 1000;
+import { isAdmin } from '../utils/adminHelper.js';
 
 export const authMiddleware = async (ctx, next) => {
     if (!ctx.from) return next();
@@ -40,7 +39,7 @@ export const authMiddleware = async (ctx, next) => {
     const userRateData = rateLimitCache.get(userId) || { count: 0, resetTime: now + RATE_LIMIT_WINDOW, lastReq: 0 };
 
     // Check if rapid spam (requests < 500ms apart)
-    if (now - userRateData.lastReq < 500 && userId.toString() !== process.env.ADMIN_ID) {
+    if (now - userRateData.lastReq < 500 && !isAdmin(userId)) {
         const strikes = (strikesCache.get(userId) || 0) + 1;
         strikesCache.set(userId, strikes);
 
@@ -89,7 +88,7 @@ export const authMiddleware = async (ctx, next) => {
 
     rateLimitCache.set(userId, userRateData);
 
-    if (userRateData.count > MAX_REQUESTS_PER_WINDOW && userId.toString() !== process.env.ADMIN_ID) {
+    if (userRateData.count > MAX_REQUESTS_PER_WINDOW && !isAdmin(userId)) {
         logger.warn(`⚠️ Rate limit exceeded for user ${userId}`);
         return ctx.reply('⚠️ Juda ko\'p so\'rov! Biroz kuting va qayta urinib ko\'ring.');
     }
@@ -142,7 +141,7 @@ export const authMiddleware = async (ctx, next) => {
             }
 
             // Bypass subscription check for admins to keep admin panel fast.
-            if (process.env.ADMIN_ID && userId.toString() === process.env.ADMIN_ID.toString()) {
+            if (isAdmin(userId)) {
                 return next();
             }
 
@@ -191,10 +190,10 @@ export const authMiddleware = async (ctx, next) => {
 
 export const adminMiddleware = (ctx, next) => {
     try {
-        const adminId = process.env.ADMIN_ID;
-        if (!adminId || ctx.from.id.toString() !== adminId.toString()) {
+        if (!isAdmin(ctx.from.id)) {
             return ctx.reply("❌ Bu buyruq faqat admin uchun.");
         }
+
         return next();
     } catch (err) {
         logger.error('Admin Middleware Error:', err.message);

@@ -53,7 +53,7 @@ const paymentReceiptScene = new Scenes.WizardScene(
         if (ctx.message && ctx.message.photo) {
             // Receipt received
             const photoId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
-            const adminId = process.env.ADMIN_ID;
+            const adminId = process.env.ADMIN_ID ? process.env.ADMIN_ID.split(',')[0].trim() : null;
             
             if (!adminId) {
                 await ctx.reply("System error: Admin is not configured. Payment feature is disabled.");

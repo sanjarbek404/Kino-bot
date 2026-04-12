@@ -95,7 +95,7 @@ const handleViolation = async (ctx, userId, reason) => {
             await ctx.reply('🚫 <b>SIZ BLOKLANGINGIZ!</b>\n\nChat qoidalarini buzganingiz uchun botdan foydalanish huquqingiz bekor qilindi.', { parse_mode: 'HTML' });
 
             // Notify admin
-            const adminId = process.env.ADMIN_ID;
+            const adminId = process.env.ADMIN_ID ? process.env.ADMIN_ID.split(',')[0].trim() : null;
             if (adminId) {
                 await ctx.telegram.sendMessage(adminId,
                     `🚨 <b>Avto-Bloklash!</b>\n\n👤 User ID: <code>${userId}</code>\n📋 Sabab: ${reason}\n⚠️ Qoidabuzarliklar: ${count}`,
