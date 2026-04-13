@@ -190,10 +190,7 @@ export const authMiddleware = async (ctx, next) => {
 
 export const adminMiddleware = (ctx, next) => {
     try {
-        if (!isAdmin(ctx.from.id)) {
-            return ctx.reply(`❌ Bu buyruq faqat admin uchun.\n\nSizning ID raqamingiz: <code>${ctx.from.id}</code>\nRender oqiyotgan ADMIN_ID: <code>${process.env.ADMIN_ID || 'Topilmadi/Undefined'}</code>`, { parse_mode: 'HTML' });
-        }
-
+        if (!isAdmin(ctx.from.id)) return;
         return next();
     } catch (err) {
         logger.error('Admin Middleware Error:', err.message);

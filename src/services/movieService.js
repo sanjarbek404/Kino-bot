@@ -17,7 +17,7 @@ export const getMovieByCode = async (code) => {
         let cached = myCache.get(cacheKey);
         if (cached) return cached;
 
-        const movie = await Movie.findOne({ code });
+        const movie = await Movie.findOne({ code }).lean();
         if (movie) myCache.set(cacheKey, movie, 180); // cache 3 mins
         return movie;
     } catch (error) {
@@ -32,18 +32,18 @@ export const searchMovies = async (query) => {
         let movies = await Movie.find(
             { $text: { $search: query } },
             { score: { $meta: "textScore" } }
-        ).sort({ score: { $meta: "textScore" } }).limit(50);
+        ).sort({ score: { $meta: "textScore" } }).limit(50).lean();
 
         // 2. Agar topilmasa Regex (Qisman mos kelish) bilan izlaymiz (Fallback)
         if (!movies || movies.length === 0) {
-            movies = await Movie.find({ title: { $regex: query, $options: 'i' } }).limit(50);
+            movies = await Movie.find({ title: { $regex: query, $options: 'i' } }).limit(50).lean();
         }
 
         return movies;
     } catch (error) {
         // Fallback for errors in text index
         try {
-            return await Movie.find({ title: { $regex: query, $options: 'i' } }).limit(50);
+            return await Movie.find({ title: { $regex: query, $options: 'i' } }).limit(50).lean();
         } catch (e) {
             logger.error('Search movies fallback error:', e);
             return [];
@@ -62,7 +62,7 @@ export const deleteMovie = async (code) => {
 
 export const getAllMovies = async () => {
     try {
-        return await Movie.find().sort({ createdAt: -1 });
+        return await Movie.find().sort({ createdAt: -1 }).lean();
     } catch (error) {
         logger.error('Get all movies error:', error);
         return [];
@@ -84,7 +84,7 @@ export const getTopMovies = async (limit = 10) => {
         let cached = myCache.get(cacheKey);
         if (cached) return cached;
 
-        const movies = await Movie.find().sort({ views: -1 }).limit(limit);
+        const movies = await Movie.find().sort({ views: -1 }).limit(limit).lean();
         if (movies) myCache.set(cacheKey, movies, 300); // cache top movies for 5 mins
         return movies;
     } catch (error) {
@@ -95,7 +95,7 @@ export const getTopMovies = async (limit = 10) => {
 
 export const getMoviesByGenre = async (genre) => {
     try {
-        return await Movie.find({ genre: { $regex: genre, $options: 'i' } });
+        return await Movie.find({ genre: { $regex: genre, $options: 'i' } }).lean();
     } catch (error) {
         logger.error('Get movies by genre error:', error);
         return [];

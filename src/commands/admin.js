@@ -30,9 +30,7 @@ export const setupAdminCommands = (bot) => {
     // Admin panel entry
     bot.command('admin', async (ctx) => {
         try {
-            if (!await adminCheck(ctx)) {
-                return ctx.reply(`❌ Bu buyruq faqat admin uchun.\n\nSizning ID raqamingiz: <code>${ctx.from.id}</code>\nRender oqiyotgan ADMIN_ID: <code>${process.env.ADMIN_ID || 'Topilmadi/Undefined'}</code>\n\nAgar ikkisi bir xil bo'lmasa, Render sozlamalarini tekshiring!`, { parse_mode: 'HTML' });
-            }
+            if (!await adminCheck(ctx)) return;
             const buttons = [
                 [Markup.button.callback('➕ Kino qo\'shish', 'admin_add_movie'), Markup.button.callback('📊 Statistika', 'admin_stats')],
                 [Markup.button.callback('📢 Reklama yuborish', 'admin_broadcast'), Markup.button.callback('💎 VIP Boshqaruv', 'admin_vip')],
