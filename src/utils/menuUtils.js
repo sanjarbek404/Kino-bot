@@ -16,9 +16,8 @@ export const sendMainMenu = async (ctx) => {
         const webAppUrl = process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/webapp` : defaultWebAppUrl;
         
         let menu = [
-            [Markup.button.webApp('🌐 Katalog (Mini App)', webAppUrl)],
+            [Markup.button.webApp('🌐 Kinolar Katalogi', webAppUrl)],
             [ctx.t('menu_search'), ctx.t('menu_cabinet')],
-            [ctx.t('menu_top'), ctx.t('menu_category')],
             [ctx.t('menu_random')]
         ];
 

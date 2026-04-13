@@ -4,9 +4,9 @@ export const locales = {
         welcome: "👋 <b>Salom, {name}!</b>\n\n🎥 Biz bilan eng zo'r kinolarni izlang va tomosha qiling. Kino kodini yoki nomini yuboring:",
         menu_main: "🏠 Bosh menyu",
         menu_cabinet: "👤 Shaxsiy Kabinet",
-        menu_search: "🔍 Kino qidirish",
+        menu_search: "🔍 Qidirish",
         menu_category: "📂 Kategoriyalar",
-        menu_random: "🎲 Tasodifiy kino",
+        menu_random: "🎲 Kino Tavsiya",
         menu_new: "🆕 Yangi kinolar",
         menu_fav: "❤️ Sevimlilar",
         menu_top: "🔥 Top kinolar",
@@ -46,9 +46,8 @@ export const locales = {
         vip_button_get: "💎 VIP olish",
         vip_restricted: "🔒 Bu funksiya <b>VIP</b> foydalanuvchilar uchun! Cheklovlarsiz ishlash uchun VIP oling.",
 
-        // Actions
-        search_prompt: "✍️ <b>Kino qidirish</b>\n\nKino nomini yoki kodini yuboring:",
-        movie_found: "🎬 <b>{title}</b> ({year})\n\n🎭 Janr: {genre}\n⭐️ Reyting: {rating}\n👁 Ko'rishlar: {views}",
+        search_prompt: "✍️ <b>Kino qidirish</b>\n\nMarhamat, kino kodi yoki nomini yozing:",
+        movie_found: "🎬 <b>{title}</b>\n🎭 Janr: {genre}\n⭐️ Reyting: {rating} | 👁 {views}",
         vip_only_comment: "🔒 Faqat VIP foydalanuvchilar sharh qoldira oladi!",
         comment_prompt: "✍️ Marhamat, kino haqida fikringizni yozing:",
         comment_saved: "✅ Sharhingiz saqlandi! Rahmat.",

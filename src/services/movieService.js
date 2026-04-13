@@ -28,22 +28,28 @@ export const getMovieByCode = async (code) => {
 
 export const searchMovies = async (query) => {
     try {
-        // 1. Dastlab Text Search (Typos and Stems)
+        // 1. Text Search (Exact Stems)
         let movies = await Movie.find(
             { $text: { $search: query } },
             { score: { $meta: "textScore" } }
         ).sort({ score: { $meta: "textScore" } }).limit(50).lean();
 
-        // 2. Agar topilmasa Regex (Qisman mos kelish) bilan izlaymiz (Fallback)
+        // 2. Direct Regex (Partial Match)
         if (!movies || movies.length === 0) {
             movies = await Movie.find({ title: { $regex: query, $options: 'i' } }).limit(50).lean();
         }
 
+        // 3. Flexible Regex (Fuzzy Match / Ignore Whitespace/Chars)
+        if (!movies || movies.length === 0) {
+            const fuzzyQuery = query.split('').join('.*?'); // Matches 'f..o..r..s..a..j'
+            movies = await Movie.find({ title: { $regex: fuzzyQuery, $options: 'i' } }).limit(10).lean();
+        }
+
         return movies;
     } catch (error) {
-        // Fallback for errors in text index
         try {
-            return await Movie.find({ title: { $regex: query, $options: 'i' } }).limit(50).lean();
+            const fuzzyQuery = query.split('').join('.*?');
+            return await Movie.find({ title: { $regex: fuzzyQuery, $options: 'i' } }).limit(10).lean();
         } catch (e) {
             logger.error('Search movies fallback error:', e);
             return [];
